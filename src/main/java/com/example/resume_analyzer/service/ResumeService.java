@@ -245,4 +245,45 @@ public AnalyzeResponse analyzeResume(AnalyzeRequest request) {
             .summary(summary)
             .build();
 }
+private final OpenAIChatService openAIChatService;
+public String analyzeWithRAG(String jobDescription, int topChunks) {
+
+    List<Double> embedding = embeddingService.getEmbedding(jobDescription);
+    if (embedding == null || embedding.isEmpty()) {
+        return "Embedding failed";
+    }
+
+    String queryVector = "[" +
+            embedding.stream()
+                    .map(d -> String.format(java.util.Locale.US, "%.10f", d))
+                    .collect(Collectors.joining(",")) +
+            "]";
+
+    List<Object[]> rows =
+            chunkRepository.topChunksAcrossAllResumes(queryVector, topChunks);
+
+    StringBuilder context = new StringBuilder();
+    for (Object[] r : rows) {
+        context.append("- ").append((String) r[1]).append("\n");
+    }
+
+    String prompt = """
+        Based on the following resume sections:
+
+        %s
+
+        Evaluate how well this resume matches the job description:
+
+        %s
+
+        Provide:
+        - Overall score (0-100)
+        - Strengths
+        - Missing skills
+        - Improvement suggestions
+        """.formatted(context.toString(), jobDescription);
+
+    return openAIChatService.generateAnalysis(prompt);
+}
+
 }

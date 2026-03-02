@@ -47,4 +47,20 @@ public List<JobMatchResult> match(@RequestBody JobMatchRequest request) {
 public AnalyzeResponse analyze(@RequestBody AnalyzeRequest request) {
     return resumeService.analyzeResume(request);
 }
+
+@PostMapping("/analyze-rag")
+public String analyzeRAG(@RequestBody JobMatchRequest request) {
+    return resumeService.analyzeWithRAG(
+            request.getJobDescription(),
+            request.getTopChunks()
+    );
+}
+
+@PostMapping("/rag")
+public String rag(@RequestBody JobMatchRequest request) {
+    return resumeService.analyzeWithRAG(
+            request.getJobDescription(),
+            request.getTopChunks()
+    );
+}
 }
