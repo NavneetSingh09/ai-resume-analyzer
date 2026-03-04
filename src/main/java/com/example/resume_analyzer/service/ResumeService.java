@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import com.example.resume_analyzer.dto.SearchResult;
 import com.example.resume_analyzer.dto.AnalyzeRequest;
 import com.example.resume_analyzer.dto.AnalyzeResponse;
+import com.example.resume_analyzer.dto.CandidateRankingResult;
 import com.example.resume_analyzer.dto.JobMatchResult;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -286,4 +287,31 @@ public String analyzeWithRAG(String jobDescription, int topChunks) {
     return openAIChatService.generateAnalysis(prompt);
 }
 
+public List<CandidateRankingResult> rankCandidates(String jobDescription, int topCandidates) {
+
+    List<Double> embedding = embeddingService.getEmbedding(jobDescription);
+
+    String queryVector = "[" +
+            embedding.stream()
+                    .map(d -> String.format(java.util.Locale.US, "%.10f", d))
+                    .collect(Collectors.joining(",")) +
+            "]";
+
+    List<Object[]> rows = chunkRepository.rankCandidates(queryVector, topCandidates);
+
+    List<CandidateRankingResult> results = new ArrayList<>();
+
+    for (Object[] row : rows) {
+
+        UUID resumeId = (UUID) row[0];
+        String chunk = (String) row[1];
+        Double distance = (Double) row[2];
+
+        double score = Math.max(0, 100 - distance * 100);
+
+        results.add(new CandidateRankingResult(resumeId, score, chunk));
+    }
+
+    return results;
+}
 }

@@ -63,4 +63,15 @@ List<Object[]> topChunksForResume(
         @Param("queryVector") String queryVector,
         @Param("topK") int topK
 );
+
+@Query(value = """
+SELECT resume_id, chunk_text, (embedding <-> CAST(:queryVector AS vector)) AS distance
+FROM resume_chunks
+ORDER BY embedding <-> CAST(:queryVector AS vector)
+LIMIT :limit
+""", nativeQuery = true)
+List<Object[]> rankCandidates(
+        @Param("queryVector") String queryVector,
+        @Param("limit") int limit
+);
 }

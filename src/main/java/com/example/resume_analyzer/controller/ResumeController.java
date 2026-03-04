@@ -9,8 +9,11 @@ import org.springframework.web.bind.annotation.*;
 import com.example.resume_analyzer.dto.SearchResult;
 import com.example.resume_analyzer.dto.AnalyzeRequest;
 import com.example.resume_analyzer.dto.AnalyzeResponse;
+import com.example.resume_analyzer.dto.CandidateRankingResult;
 import com.example.resume_analyzer.dto.JobMatchRequest;
 import com.example.resume_analyzer.dto.JobMatchResult;
+import com.example.resume_analyzer.dto.JobRankingRequest;
+
 import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
@@ -71,5 +74,15 @@ public Resume uploadResume(@RequestParam("file") MultipartFile file) {
     String text = pdfService.extractText(file);
 
     return resumeService.saveResume(text);
+}
+
+@PostMapping("/jobs/rank")
+public List<CandidateRankingResult> rankCandidates(
+        @RequestBody JobRankingRequest request
+) {
+    return resumeService.rankCandidates(
+            request.getJobDescription(),
+            request.getTopCandidates()
+    );
 }
 }
