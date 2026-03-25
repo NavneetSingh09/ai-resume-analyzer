@@ -15,7 +15,7 @@ public interface ResumeChunkRepository extends JpaRepository<ResumeChunk, UUID> 
     @Modifying
     @Transactional
     @Query(value = """
-        INSERT INTO resume_chunks 
+        INSERT INTO resume_chunks
         (id, resume_id, chunk_index, chunk_text, embedding)
         VALUES (:id, :resumeId, :chunkIndex, :chunkText, CAST(:embedding AS vector))
         """, nativeQuery = true)
@@ -27,51 +27,53 @@ public interface ResumeChunkRepository extends JpaRepository<ResumeChunk, UUID> 
             @Param("embedding") String embedding
     );
 
-    // ✅ return chunk_text + distance
-   @Query(value = """
-    SELECT chunk_text, (embedding <-> CAST(:queryVector AS vector)) AS distance
-    FROM resume_chunks
-    ORDER BY embedding <-> CAST(:queryVector AS vector)
-    LIMIT :limit
-    """, nativeQuery = true)
+    @Query(value = """
+        SELECT chunk_text,
+               cosine_distance(embedding, CAST(:queryVector AS vector)) AS distance
+        FROM resume_chunks
+        ORDER BY embedding <-> CAST(:queryVector AS vector)
+        LIMIT :limit
+        """, nativeQuery = true)
     List<Object[]> searchSimilarChunksWithDistance(
             @Param("queryVector") String queryVector,
             @Param("limit") int limit
     );
 
-     // Pull top chunks across ALL resumes, including resume_id and distance
-   @Query(value = """
-    SELECT resume_id, chunk_text, (embedding <-> CAST(:queryVector AS vector)) AS distance
-    FROM resume_chunks
-    ORDER BY embedding <-> CAST(:queryVector AS vector)
-    LIMIT :topChunks
-    """, nativeQuery = true)
+    @Query(value = """
+        SELECT resume_id, chunk_text,
+               cosine_distance(embedding, CAST(:queryVector AS vector)) AS distance
+        FROM resume_chunks
+        ORDER BY embedding <-> CAST(:queryVector AS vector)
+        LIMIT :topChunks
+        """, nativeQuery = true)
     List<Object[]> topChunksAcrossAllResumes(
             @Param("queryVector") String queryVector,
             @Param("topChunks") int topChunks
     );
 
     @Query(value = """
-    SELECT resume_id, chunk_text, (embedding <-> CAST(:queryVector AS vector)) AS distance
-    FROM resume_chunks
-    WHERE resume_id = :resumeId
-    ORDER BY embedding <-> CAST(:queryVector AS vector)
-    LIMIT :topK
-    """, nativeQuery = true)
-List<Object[]> topChunksForResume(
-        @Param("resumeId") UUID resumeId,
-        @Param("queryVector") String queryVector,
-        @Param("topK") int topK
-);
+        SELECT resume_id, chunk_text,
+               cosine_distance(embedding, CAST(:queryVector AS vector)) AS distance
+        FROM resume_chunks
+        WHERE resume_id = :resumeId
+        ORDER BY embedding <-> CAST(:queryVector AS vector)
+        LIMIT :topK
+        """, nativeQuery = true)
+    List<Object[]> topChunksForResume(
+            @Param("resumeId") UUID resumeId,
+            @Param("queryVector") String queryVector,
+            @Param("topK") int topK
+    );
 
-@Query(value = """
-SELECT resume_id, chunk_text, (embedding <-> CAST(:queryVector AS vector)) AS distance
-FROM resume_chunks
-ORDER BY embedding <-> CAST(:queryVector AS vector)
-LIMIT :limit
-""", nativeQuery = true)
-List<Object[]> rankCandidates(
-        @Param("queryVector") String queryVector,
-        @Param("limit") int limit
-);
+    @Query(value = """
+        SELECT resume_id, chunk_text,
+               cosine_distance(embedding, CAST(:queryVector AS vector)) AS distance
+        FROM resume_chunks
+        ORDER BY embedding <-> CAST(:queryVector AS vector)
+        LIMIT :limit
+        """, nativeQuery = true)
+    List<Object[]> rankCandidates(
+            @Param("queryVector") String queryVector,
+            @Param("limit") int limit
+    );
 }
