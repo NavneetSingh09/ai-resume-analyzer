@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  Upload, Search, GitCompare, Brain, Trophy,
+  Upload, Search, GitCompare, Brain, Trophy, Menu, X,
 } from 'lucide-react';
 import UploadPage from './pages/UploadPage';
 import SearchPage from './pages/SearchPage';
@@ -27,11 +27,21 @@ const PAGES = {
 
 export default function App() {
   const [activePage, setActivePage] = useState('upload');
+  const [menuOpen, setMenuOpen] = useState(false);
   const ActiveComponent = PAGES[activePage];
+
+  const handleNavClick = (id) => {
+    setActivePage(id);
+    setMenuOpen(false);
+  };
 
   return (
     <div className="app-layout">
-      <aside className="sidebar">
+      <button className="mobile-menu-btn" onClick={() => setMenuOpen(!menuOpen)}>
+        {menuOpen ? <X /> : <Menu />}
+      </button>
+
+      <aside className={`sidebar ${menuOpen ? 'sidebar-open' : ''}`}>
         <div className="sidebar-logo">
           <h1>Resume<span>AI</span></h1>
           <p>Smart Analyzer</p>
@@ -41,7 +51,7 @@ export default function App() {
             <button
               key={id}
               className={`nav-link ${activePage === id ? 'active' : ''}`}
-              onClick={() => setActivePage(id)}
+              onClick={() => handleNavClick(id)}
             >
               <Icon />
               {label}
@@ -49,6 +59,9 @@ export default function App() {
           ))}
         </nav>
       </aside>
+
+      {menuOpen && <div className="mobile-overlay" onClick={() => setMenuOpen(false)} />}
+
       <main className="main-content">
         <ActiveComponent />
       </main>
